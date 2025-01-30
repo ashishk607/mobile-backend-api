@@ -4,14 +4,12 @@ import bcript from "bcrypt";
 
 const userSchema =  new Schema(
     {
-        username: {
+        fullName: {
             type: String,
             require: true,
-            unique: true,
-            lowecase: true,
             trim: true,
             index: true
-        },
+        },        
         email: {
             type: String,
             require: true,
@@ -19,31 +17,36 @@ const userSchema =  new Schema(
             lowecase: true,
             trim: true
         },
-        fullName: {
+        mobileNo: {
             type: String,
-            require: true,
+            required: true,
+            unique: true,
             trim: true,
-            index: true
-        },
-        avatar: {
-            type: String, // cloudiary url
-            require: true
-            
-        },
+            index: true,
+            validate: {
+                validator: function (v) {
+                    return /^\d{10}$/.test(v);
+                },
+                message: props => `${props.value} is not a valid 10-digit mobile number!`
+            }
+        },       
         password: {
             type: String,
             require: [true, 'Password is required']
         },
+        avatar: {
+            type: String, // cloudiary url
+            default: null
+            
+        },
         refreshToken: {
             type: String,
-        }   
-
+        }
     }, 
     {
         timestamps: true
     }
 );
-
 userSchema.pre("save", async function (next) {
     if(!this.isModified("password"))return next();
 
@@ -58,7 +61,7 @@ userSchema.methods.generateAccessToken = function(){
         {
             _id: this._id,
             email: this.email,
-            username: this.username,
+            mobileNo: this.mobileNo,
             fullName: this.fullName
         },
         process.env.ACCESS_TOKEN_SECRET,
