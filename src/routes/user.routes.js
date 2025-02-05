@@ -6,7 +6,8 @@ import {
     loginUser, 
     logoutUser, 
     refreshAccessToken, 
-    registerUser, 
+    registerUser,
+    verifyOTP,
     updateAccountDetails, 
     updateUserAvatar
 } from "../controllers/user.controller.js";
@@ -23,7 +24,7 @@ router.route("/register").post(
     ]),
     registerUser
 )
-
+router.route("/verify-otp").post(verifyOTP)
 router.route("/login").post(loginUser)
 // secured routes
 router.route("/logout").post(verifyJWT, logoutUser)

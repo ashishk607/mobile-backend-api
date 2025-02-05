@@ -8,31 +8,22 @@ const userSchema =  new Schema(
             type: String,
             require: true,
             trim: true,
-            index: true
+            lowecase: true
         },        
         email: {
             type: String,
-            require: true,
-            unique: true,
             lowecase: true,
             trim: true
         },
         mobileNo: {
             type: String,
             required: true,
-            unique: true,
-            trim: true,
-            index: true,
-            validate: {
-                validator: function (v) {
-                    return /^\d{10}$/.test(v);
-                },
-                message: props => `${props.value} is not a valid 10-digit mobile number!`
-            }
         },       
         password: {
             type: String,
-            require: [true, 'Password is required']
+            require: [true, 'Password is required'],
+            minLength: [6, "Password must have at least 6 characters."],
+            maxLength: [12, "Password cannot have more than 12 characters."],
         },
         avatar: {
             type: String, // cloudiary url
@@ -41,21 +32,36 @@ const userSchema =  new Schema(
         },
         refreshToken: {
             type: String,
-        }
+        },
+        accountVerified: { type: Boolean, default: false },
+        verificationCode: Number,
+        verificationCodeExpire: Date,
+        resetPasswordToken: String,
+        resetPasswordExpire: Date,
     }, 
     {
         timestamps: true
     }
 );
+
+// Hash password before saving
 userSchema.pre("save", async function (next) {
     if(!this.isModified("password"))return next();
-
     this.password = await bcript.hash(this.password, 10)
     next();
-}),
+});
+// Compare password
 userSchema.methods.isPasswordCorrect = async function(password){
     return await bcript.compare(password, this.password)
 }
+// Generate a 6-digit verification code
+userSchema.methods.generateVerificationCode = function () {
+    const verificationCode = Math.floor(100000 + Math.random() * 900000); // Ensures 6-digit number
+    this.verificationCode = verificationCode;
+    this.verificationCodeExpire = Date.now() + 10 * 60 * 1000; // Expires in 10 minutes
+    return verificationCode;
+};
+
 userSchema.methods.generateAccessToken = function(){
     return jwt.sign(
         {
@@ -74,7 +80,6 @@ userSchema.methods.generateRefreshToken = function(){
     return jwt.sign(
         {
             _id: this._id,
-            
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
