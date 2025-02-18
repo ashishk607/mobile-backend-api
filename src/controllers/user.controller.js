@@ -187,7 +187,6 @@ const verifyOTP = asyncHandler(async (req, res, next) => {
 
 
 });
-
 //user login code
 const loginUser = asyncHandler(async (req, res) => {
     const {email, password} = req.body
@@ -248,7 +247,6 @@ const logoutUser = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: true
     }
-
     return res 
     .status(200)
     .clearCookie("accessToken", options)
@@ -258,6 +256,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken = req.cookie.refreshToken || req.body.refreshAccessToken
+    //console.log(incomingRefreshToken);
     if (!incomingRefreshToken) {
         throw new ApiError(401, "unauthorized request")
     }
@@ -319,7 +318,7 @@ const changeCurrentPassword = asyncHandler(async(req, res) => {
 const getCurrentUser = asyncHandler(async (req, res) => {
     return res
     .status(200)
-    .json(200, req.user, "current user fetched successfully")
+    .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
 })
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
@@ -365,7 +364,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
             }
         },
         {new: true}
-    ).select("-password")
+    ).select("-password -refreshToken")
 
     return res
     .status(200)
