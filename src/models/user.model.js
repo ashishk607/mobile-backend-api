@@ -30,14 +30,27 @@ const userSchema =  new Schema(
             default: null
             
         },
+        college: {
+            type: Schema.Types.ObjectId,
+            ref: "Colleges"
+        },
+        course: {
+            type: Schema.Types.ObjectId,
+            ref: "Courses"
+        },
         refreshToken: {
             type: String,
         },
-        accountVerified: { type: Boolean, default: false },
-        verificationCode: Number,
-        verificationCodeExpire: Date,
-        resetPasswordToken: String,
-        resetPasswordExpire: Date,
+        accountVerified: { 
+            type: Boolean, 
+            default: false 
+        },
+        verificationCode: {
+            type: Number,
+        },
+        verificationCodeExpire: {
+            type: Date,
+        },
     }, 
     {
         timestamps: true
