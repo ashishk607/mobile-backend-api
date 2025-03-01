@@ -187,49 +187,85 @@ const verifyOTP = asyncHandler(async (req, res, next) => {
 
 
 });
-//user login code
 const loginUser = asyncHandler(async (req, res) => {
-    const {email, password} = req.body
-    if(!email) {
-        throw new ApiError(400, "email is required");
+    const { email, password } = req.body;
+    if (!email?.trim() || !password) {
+        throw new ApiError(400, "Email and password are required");
     }
-    if(!password) {
-        throw new ApiError(400, "password is required");
-    }
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.trim() });
     if (!user) {
-        throw new ApiError (404, "User dose not exist");
+        throw new ApiError(404, "User does not exist");
     }
     const isPasswordValid = await user.isPasswordCorrect(password)
-    if(!isPasswordValid) {
+    if (!isPasswordValid) {
         throw new ApiError(401, "Invalid user credentials");
     }
-    const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
-
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
-
-    const options = {
-        httpOnly: true,
-        secure: true
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    if (!accessToken || !refreshToken) {
+        throw new ApiError(500, "Token generation failed. Please try again.");
     }
-
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+    };      
     return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-        new ApiResponse(
-            200,
-            {
-                user:loggedInUser,
-                accessToken, 
-                refreshToken
-            },
-            "User logged In Successfully"
-
-        )
-    )
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json(
+            new ApiResponse(
+                200,
+                { user: loggedInUser, accessToken, refreshToken },
+                "User logged in successfully"
+            )
+        );
 });
+
+
+// const loginUser = asyncHandler(async (req, res) => {
+//     const {email, password} = req.body
+//     if(!email) {
+//         throw new ApiError(400, "email is required");
+//     }
+//     if(!password) {
+//         throw new ApiError(400, "password is required");
+//     }
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//         throw new ApiError (404, "User dose not exist");
+//     }
+//     const isPasswordValid = await user.isPasswordCorrect(password)
+//     if(!isPasswordValid) {
+//         throw new ApiError(401, "Invalid user credentials");
+//     }
+//     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
+
+//     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+
+//     const options = {
+//         httpOnly: true,
+//         secure: true
+//     }
+
+//     return res
+//     .status(200)
+//     .cookie("accessToken", accessToken, options)
+//     .cookie("refreshToken", refreshToken, options)
+//     .json(
+//         new ApiResponse(
+//             200,
+//             {
+//                 user:loggedInUser,
+//                 accessToken, 
+//                 refreshToken
+//             },
+//             "User logged In Successfully"
+
+//         )
+//     )
+// });
 
 const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
