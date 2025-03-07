@@ -18,6 +18,11 @@ const userSchema =  new Schema(
         mobileNo: {
             type: String,
             required: true,
+        },
+        role: {
+            type: String,
+            enum: ["user", "admin", "superadmin", "collegeAdmin"],
+            default: "user"
         },       
         password: {
             type: String,
